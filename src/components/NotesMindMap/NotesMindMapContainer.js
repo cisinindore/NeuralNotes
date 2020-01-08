@@ -14,6 +14,7 @@ import {
 import { NotesMindMapComponent } from 'components/NotesMindMap/NotesMindMapComponent';
 
 const mapStateToProps = ({ notesMindMap: { rootNote, selectedNote, noteText, showNoteNameEditor, isChangeParentModeActive } }) => {
+  
   return {
     selectedNote,
     showNoteNameEditor,

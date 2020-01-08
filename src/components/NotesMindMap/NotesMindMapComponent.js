@@ -9,13 +9,27 @@ import { StyledNotesMindMap } from 'components/NotesMindMap/NotesMindMapStyles';
 import tree from 'helpers/tree';
 
 export class NotesMindMapComponent extends Component {
+  constructor() {
+    super();
+    this.state = {
+      propsRootNote:{},
+    };
+  }
+  componentWillReceiveProps(props){
+    this.setState({propsRootNote:props.rootNote});
+  }
+
+  editRootNode(){
+   const {propsRootNote} =this.state;
+  }
+
   render() {
     const {
       selectedNote,
       showNoteNameEditor,
       isChangeParentModeActive
     } = this.props;
-
+    const {propsRootNote} =this.state;
     const visGraph = this.treeToVisGraph();
 
     const visOptions = {
@@ -69,8 +83,10 @@ export class NotesMindMapComponent extends Component {
     // if clicking on the current note, do nothing.
     if (targetNoteId === selectedNote.id) return;
 
-    const rootNote = this.props.rootNote;
+    // const rootNote = this.props.rootNote;
 
+    
+    const rootNote = this.props.rootData ? this.props.rootData : this.props.rootNote;
     const targetNote = tree(rootNote).find(node => node.id === targetNoteId);
 
     if (!targetNote) {
@@ -81,13 +97,15 @@ export class NotesMindMapComponent extends Component {
   };
 
   visNetworkClickHandler = event => {
-    const { rootNote, selectedNote } = this.props;
+    const { selectedNote } = this.props;
+
+    const rootNote = this.props.rootData ? this.props.rootData : this.props.rootNote;
     const { isChangeParentModeActive } = this.props;
 
     this.props.onMindMapClick();
     if (VisNetworkHelper.clickedOnNote(event)) {
       let targetNoteId = VisNetworkHelper.getTargetNoteId(event);
-      const targetNote = tree(rootNote).find(node => node.id === targetNoteId);
+      const targetNote = tree(rootNote).find(node => node.id === targetNoteId);      
 
       if (isChangeParentModeActive) {
         this.props.changeParentNote({
@@ -104,7 +122,8 @@ export class NotesMindMapComponent extends Component {
   };
 
   visNetworkDoubleClickHandler = event => {
-    const { rootNote } = this.props;
+   
+    const rootNote = this.props.rootData ? this.props.rootData : this.props.rootNote;
     if (VisNetworkHelper.clickedOnNote(event)) {
       let targetNoteId = VisNetworkHelper.getTargetNoteId(event);
       const targetNote = tree(rootNote).find(node => node.id === targetNoteId);
@@ -113,7 +132,8 @@ export class NotesMindMapComponent extends Component {
   };
 
   visNetworkHoldHandler = event => {
-    const { rootNote } = this.props;
+  
+    const rootNote = this.props.rootData ? this.props.rootData : this.props.rootNote;
     if (VisNetworkHelper.clickedOnNote(event)) {
       let targetNoteId = VisNetworkHelper.getTargetNoteId(event);
       const targetNote = tree(rootNote).find(node => node.id === targetNoteId);
@@ -122,7 +142,8 @@ export class NotesMindMapComponent extends Component {
   };
 
   editNote(targetNote) {
-    const { rootNote } = this.props;
+
+    const rootNote = this.props.rootData ? this.props.rootData : this.props.rootNote;
     const note = tree(rootNote).find(node => node.id === targetNote.id);
 
     if (note.name === noteStorage.APP_FOLDER_NAME || !note.isNote) {
@@ -146,11 +167,11 @@ export class NotesMindMapComponent extends Component {
     window.open(noteStorage.getLinkToNote(this.props.selectedNote));
   };
 
-  treeToVisGraph() {
-    const rootNote = this.props.rootNote;
+  treeToVisGraph(Data = '') {
+    const rootNote = this.props.rootData ? this.props.rootData : this.props.rootNote;
     const visNodes = [];
     const visEdges = [];
-
+    
     if (!rootNote) {
       throw new Error('Can not render the mind map without a root node');
     }
@@ -176,6 +197,7 @@ export class NotesMindMapComponent extends Component {
       }
     }
   }
+
 }
 
 NotesMindMapComponent.propTypes = {

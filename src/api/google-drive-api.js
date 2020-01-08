@@ -26,7 +26,8 @@ var self = {
   parseParents: parseParents,
   createDirectory: createDirectory
 };
-
+let FolderStructure = [];
+var Files = [];
 export default self;
 
 /**
@@ -184,17 +185,88 @@ function createDirectory(options) {
   });
 }
 
-function findNotesByName(name = '') {
-  const query = `name contains '${name}' and trashed = false and mimeType = 'text/plain'`;
-  const params = { 'q': query };
+async function findNotesByName(name = "") {
+  const query =
+    "name contains '" +
+    name +
+    "' and trashed = false and (mimeType = 'text/plain' or mimeType = 'application/vnd.google-apps.folder') ";
+  const params = { q: query, fields: FILE_LIST_FIELDS };
   const request = gapi.client.drive.files.list(params);
 
-  spinner.show();
-
-  return new Promise(resolve => {
-    request.execute(function (resp) {
-      resolve(resp.files);
-      spinner.hide();
+  let promise = new Promise((res, rej) => {
+    request.execute(async function(resp) {
+      let arr = [];
+      for (let files of resp.files) {
+        var parent = await getFolder(files.parents[0]);
+        var File = {
+          id: files.id,
+          name: files.name,
+          parent: parent
+        };
+        arr.push(File);
+      }
+      res(arr);
     });
   });
+
+  return await promise;
+}
+
+function getFiles(ParentFolderId) {
+  const query =
+    "name contains '" +
+    name +
+    "' and trashed = false and (mimeType = 'text/plain' or mimeType = 'application/vnd.google-apps.folder') and parents ='" +
+    ParentFolderId +
+    "'";
+  const params = { q: query };
+  const request = gapi.client.drive.files.list(params);
+
+  request.execute(function(resp) {
+    for (let files of resp.files) {
+      if (files.mimeType == "application/vnd.google-apps.folder") {
+        getFiles(files.id);
+      } else if (files.mimeType == "text/plain") {
+        Files.push(files);
+      }
+    }
+  });
+  return true;
+}
+
+async function getAllFolders() {
+  // const query = "name contains '"+name+"' and trashed = false and (mimeType = 'text/plain' or mimeType = 'application/vnd.google-apps.folder') and parents ='"+ParentFolderId+"'";
+  const query =
+    "trashed = false and mimeType = 'application/vnd.google-apps.folder'";
+  const params = {
+    q: query,
+    fields: FILE_LIST_FIELDS
+  };
+  const request = gapi.client.drive.files.list(params);
+
+  return new Promise(resolve => {
+    request.execute(function(resp) {
+      resolve(resp);
+      MapAllFolders(resp.files);
+    });
+  });
+}
+
+function MapAllFolders(FolderData) {
+  FolderStructure = [];
+  for (let Folder of FolderData) {
+    FolderStructure[Folder.id] = Folder;
+  }
+}
+
+async function getFolder(FolderId) {
+  var Folder = [];
+  if (FolderStructure && FolderStructure[FolderId]) {
+    Folder = FolderStructure[FolderId];
+  } else {
+    await getAllFolders();
+    Folder = FolderStructure[FolderId];
+  }
+
+  return Folder;
 }

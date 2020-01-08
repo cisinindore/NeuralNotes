@@ -205,9 +205,16 @@ function createAppRootTextFile({ id }) {
  * Try to find "APP_FOLDER_NAME" folder in google drive root.
  */
 function findAppFolder() {
+
+    var folderName = localStorage.getItem('APP_FOLDER_NAME') != undefined ? localStorage.getItem('APP_FOLDER_NAME') : APP_FOLDER_NAME;
+    var folderId = localStorage.getItem('folderId') != undefined ? localStorage.getItem('folderId') : 'root';
+
+  localStorage.removeItem('APP_FOLDER_NAME');
+  localStorage.removeItem('folderId');
+
   return googleDriveApi.findByName({
-    name: APP_FOLDER_NAME,
-    folderId: 'root'
+    name: folderName,
+    folderId: folderId
   });
 }
 
