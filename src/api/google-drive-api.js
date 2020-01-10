@@ -13,7 +13,8 @@ let FILE_FIELDS = 'id, name, mimeType, parents';
  * Fields to get from Google Drive when requestin a list of files.
  */
 let FILE_LIST_FIELDS = 'nextPageToken, files(' + FILE_FIELDS + ')';
-
+let pageToken = '';
+let folderStructure = [];
 var self = {
   FILE_FIELDS: FILE_FIELDS,
   FILE_LIST_FIELDS: FILE_LIST_FIELDS,
@@ -26,8 +27,6 @@ var self = {
   parseParents: parseParents,
   createDirectory: createDirectory
 };
-let FolderStructure = [];
-var Files = [];
 export default self;
 
 /**
@@ -186,87 +185,77 @@ function createDirectory(options) {
 }
 
 async function findNotesByName(name = "") {
-  const query =
-    "name contains '" +
-    name +
-    "' and trashed = false and (mimeType = 'text/plain' or mimeType = 'application/vnd.google-apps.folder') ";
+  let query = '';
+  query += `name contains '${name}'`;
+  query += " and trashed = false";
+  query += " and mimeType = 'application/vnd.google-apps.folder'";
+
   const params = { q: query, fields: FILE_LIST_FIELDS };
   const request = gapi.client.drive.files.list(params);
 
   let promise = new Promise((res, rej) => {
     request.execute(async function(resp) {
-      let arr = [];
-      for (let files of resp.files) {
-        var parent = await getFolder(files.parents[0]);
-        var File = {
-          id: files.id,
-          name: files.name,
+      let filesArr = [];
+      for (let file of resp.files) {
+        let parent = await getFolder(file.parents[0]);
+        let fileData = {
+          id: file.id,
+          name: file.name,
           parent: parent
         };
-        arr.push(File);
+        filesArr.push(fileData);
       }
-      res(arr);
+      res(filesArr);
     });
   });
 
   return await promise;
 }
 
-function getFiles(ParentFolderId) {
-  const query =
-    "name contains '" +
-    name +
-    "' and trashed = false and (mimeType = 'text/plain' or mimeType = 'application/vnd.google-apps.folder') and parents ='" +
-    ParentFolderId +
-    "'";
-  const params = { q: query };
-  const request = gapi.client.drive.files.list(params);
-
-  request.execute(function(resp) {
-    for (let files of resp.files) {
-      if (files.mimeType == "application/vnd.google-apps.folder") {
-        getFiles(files.id);
-      } else if (files.mimeType == "text/plain") {
-        Files.push(files);
-      }
-    }
-  });
-  return true;
-}
-
 async function getAllFolders() {
-  // const query = "name contains '"+name+"' and trashed = false and (mimeType = 'text/plain' or mimeType = 'application/vnd.google-apps.folder') and parents ='"+ParentFolderId+"'";
-  const query =
-    "trashed = false and mimeType = 'application/vnd.google-apps.folder'";
+  let query = '';
+  query += " trashed = false";
+  query += " and mimeType = 'application/vnd.google-apps.folder'";
   const params = {
-    q: query,
-    fields: FILE_LIST_FIELDS
+    q         : query,
+    fields    : FILE_LIST_FIELDS,
+    pageToken : pageToken
   };
   const request = gapi.client.drive.files.list(params);
 
   return new Promise(resolve => {
     request.execute(function(resp) {
       resolve(resp);
-      MapAllFolders(resp.files);
+      mapAllFolders(resp.files);
+      pageToken = resp.nextPageToken;
     });
   });
 }
 
-function MapAllFolders(FolderData) {
-  FolderStructure = [];
-  for (let Folder of FolderData) {
-    FolderStructure[Folder.id] = Folder;
+function mapAllFolders(googleDriveFoldersList) {
+  for (let folder of googleDriveFoldersList) {
+    folderStructure[folder.id] = folder;
   }
 }
 
-async function getFolder(FolderId) {
-  var Folder = [];
-  if (FolderStructure && FolderStructure[FolderId]) {
-    Folder = FolderStructure[FolderId];
+async function getFolder(folderId) {
+  var folder = [];
+  if (folderStructure && folderStructure[folderId]) {
+    folder = folderStructure[folderId];
   } else {
     await getAllFolders();
-    Folder = FolderStructure[FolderId];
+    folder = folderStructure[folderId];
+    if(pageToken == undefined && folder == undefined){
+      return {
+        'id'        : 'root' ,
+        'mimeType'  : "application/vnd.google-apps.folder", 
+        'name'      : "root",
+        'parents'   : [ 'root']
+         
+      };
+    }
   }
-
-  return Folder;
+  console.log(folderStructure[folderId],folderId,pageToken);
+  return folder ? folder : getFolder(folderId,);
+  
 }

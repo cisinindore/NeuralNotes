@@ -1,60 +1,56 @@
 import React, { useCallback, useState } from 'react';
-import { put, call, takeEvery } from 'redux-saga/dist/redux-saga-effects-npm-proxy.cjs';
 import PropTypes from 'prop-types';
-import { debounce } from 'underscore';
-import VisGraph from 'react-graph-vis';
-
 import Modal from 'react-awesome-modal';
 import { StyledIcon, StyledInput, StyledSearchPanelWrapper } from 'components/SearchPanel/SearchPanelStyles';
 import siteGlobalLoadingBar from 'ui/spinner/site-global-loading-bar'
 import noteStorage from 'storage/noteStorage';
 import googleDriveApi from 'api/google-drive-api';
 
-import { loadApp } from '../App/AppSagas';
-import { NotesMindMapComponent } from '../NotesMindMap/NotesMindMapComponent';
-
 let spinner = siteGlobalLoadingBar.create('google-drive-api');
 
 export const SearchPanelComponent = props => {
 
   const [query, setQuery] = useState('');
-  const [seachFiles, setSeachFiles] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
+  //-- we change functionality onchange to onclick
   // const debouncedCallback = debounce(props.onChange, props.onChangeDelay);
   const onChange = useCallback(({ target: { value } }) => {
     setQuery(value);
+    //-- we change functionality onchange to onclick
     // debouncedCallback(value);
   }, [setQuery]);
 
 
-  const [visible, handleModal] = useState( false );
-
+  const [isModalVisible, setIsModalVisible] = useState( false );
   
   const openModal = () => {
     spinner.show();
-    handleModal(true);
+    setIsModalVisible(true);
     googleDriveApi.findNotesByName(query).then(data => {
-      const Files = data.map((item, key) =>
-        <li onClick={() => renderResult(item.parent)} key={item.id} > {item.parent.name} > {item.name}</li>
-      );
-      setSeachFiles(Files);
+      const results = data.map((item, key) =>{
+        if(item.parent.id != 'root'){
+          return <li onClick={() => renderResult(item.parent)} key={item.id} > {item.parent.name} > {item.name}</li>;
+        }
+      });
+      setSearchResults(results);
       spinner.hide();
     });
       
   };
 
   const closeModal = () => {
-    handleModal(false);
+    setIsModalVisible(false);
   }
 
 
   const renderResult = (parent) => {
     localStorage.setItem('APP_FOLDER_NAME',parent.name);
     localStorage.setItem('folderId',parent.parents[0]); 
-    handleModal(false);
+    setIsModalVisible(false);
     noteStorage.scanDrive().then(
       (data)=> {
         noteStorage.fetchChildNotes(data).then((withChildData)=>
-          props.newRoot(data)  
+          props.setRoot(data)  
         )        
       }
     );
@@ -66,13 +62,13 @@ export const SearchPanelComponent = props => {
       <StyledIcon />
       <StyledInput value={query} onChange={onChange}/>
       <input type="button" value="Open" onClick={() => openModal()} />
-      <Modal  visible={visible} effect="fadeInUp" onClickAways={() => closeModal()}>
+      <Modal  visible={isModalVisible} effect="fadeInUp" onClickAways={() => closeModal()}>
         <div>
-          <h1>Search Files
+          <h1>Search Results
           </h1>
           <a onClick={() => closeModal()}>Close</a>
           <ul>
-            {seachFiles}
+            {searchResults}
           </ul>
         </div>
       </Modal>
