@@ -26,7 +26,8 @@ export default {
   remove,
   move, 
   updateNoteName,
-  getLinkToNote
+  getLinkToNote,
+  fetchNoteById
 };
 
 function fetchChildNotes(note) {
@@ -38,6 +39,13 @@ function fetchChildNotes(note) {
       });
 
       return children;
+    });
+}
+
+function fetchNoteById(noteId) {
+  return noteStorageApi.fetchNoteById(noteId)
+    .then(function (data) {
+      return data;
     });
 }
 

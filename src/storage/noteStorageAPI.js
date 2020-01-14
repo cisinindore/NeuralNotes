@@ -24,7 +24,8 @@ export default {
   remove,
   move,
   updateFileName,
-  updateNoteContentFileName
+  updateNoteContentFileName,
+  fetchNoteById
 };
 
 function setAppRootFolder(folder) {
@@ -63,6 +64,7 @@ function scanDrive() {
  * Find child directories for given noteId folder.
  */
 function fetchChildNotes(note) {
+  console.log(note);
   spinner.show();
   return new Promise((resolve, reject) => {
     console.debug('[Get] Child notes for: "' + note.name + '"');

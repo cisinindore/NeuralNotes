@@ -105,9 +105,6 @@ function* changeParentNote({ data: { noteId, newParent } }) {
 
 function* searchNoteSaga({ data }) {
   const results = yield googleDriveApi.findNotesByName(data);
-  // yield call([toast, toast.error], 'Search is not implemented yet :) See search results in console');
-
-  localStorage.setItem('searchResults', JSON.stringify(results));
   return new Promise(resolve => {
       resolve(results);
   });
