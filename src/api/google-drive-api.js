@@ -8,14 +8,11 @@ let spinner = siteGlobalLoadingBar.create('google-drive-api');
 /*
  * Fields to get from Google Drive when requesting a file.
  */
-let FILE_FIELDS = 'id, name';
+let FILE_FIELDS = 'id, name, mimeType, parents';
 /*
  * Fields to get from Google Drive when requestin a list of files.
  */
-let FILE_LIST_FIELDS = 'nextPageToken, files(' + FILE_FIELDS + ')';
-let pageToken = '';
-var folderStructure = [];
-let count = 0;
+let FILE_LIST_FIELDS = 'nextPageToken, files(' + FILE_FIELDS + ')'; 
 var self = {
   FILE_FIELDS: FILE_FIELDS,
   FILE_LIST_FIELDS: FILE_LIST_FIELDS,
@@ -194,70 +191,75 @@ async function findNotesByName(name = "") {
   const params = { q: query, fields: FILE_LIST_FIELDS };
   const request = gapi.client.drive.files.list(params);
 
-  let promise = new Promise((res, rej) => {
+  let promise = new Promise((res) => {
     request.execute(async function(resp) {
-      let filesArr = [];
-      for (let file of resp.files) {
-        let parent = await getFolder(file.id);
-        let fileData = {
-          id: file.id,
-          name: file.name,
-          parent: parent
-        };
-        filesArr.push(fileData);
-      }
-      res(filesArr);
+      res(resp.files);
     });
   });
 
   return await promise;
 }
 
-async function getAllFolders() {
-  let query = '';
-  query += " trashed = false";
-  query += " and mimeType = 'application/vnd.google-apps.folder'";
-  const params = {
-    q         : query,
-    fields    : FILE_LIST_FIELDS,
-    pageToken : pageToken
-  };
-  const request = gapi.client.drive.files.list(params);
+/**
+ * getAllFolders all folders from google drive.
+ *
+ * This may be used in Future.
+ */
+// async function getAllFolders() {
+//   let query = '';
+//   query += " trashed = false";
+//   query += " and mimeType = 'application/vnd.google-apps.folder'";
+//   const params = {
+//     q         : query,
+//     fields    : FILE_LIST_FIELDS,
+//     pageToken : pageToken
+//   };
+//   const request = gapi.client.drive.files.list(params);
 
-  return new Promise(resolve => {
-    request.execute(function(resp) {
-      resolve(resp);
-      mapAllFolders(resp.files);
-      pageToken = resp.nextPageToken;
-    });
-  });
-}
-
-function mapAllFolders(googleDriveFoldersList) {
-  for (let folder of googleDriveFoldersList) {
-    folderStructure[folder.id] = folder;
-    count++;
-  }
-}
-
-async function getFolder(folderId) {
-  var folder = [];
-  if (folderStructure && folderStructure[folderId]) {
-    folder = folderStructure[folderId];
-  } else {
-    await getAllFolders();
-    folder = folderStructure[folderId];
-    if(pageToken == undefined && folder == undefined){
-      return {
-        'id'        : 'root' ,
-        'mimeType'  : "application/vnd.google-apps.folder", 
-        'name'      : "root",
-        'parents'   : [ 'root']
+//   return new Promise(resolve => {
+//     request.execute(function(resp) {
+//       resolve(resp);
+//       mapAllFolders(resp.files);
+//       pageToken = resp.nextPageToken;
+//     });
+//   });
+// }
+/**
+ * Create a array for all folders so we can get folder details.
+ *
+ * @param {Array} googleDriveFoldersList - all folders from google drive .
+ * This may be used in Future.
+ */
+// function mapAllFolders(googleDriveFoldersList) {
+//   for (let folder of googleDriveFoldersList) {
+//     folderStructure[folder.id] = folder;
+//     count++;
+//   }
+// }
+/**
+ * Get floder Information.
+ *
+ * @param {String} folderId - folder Id name.
+ * This may be used in Future.
+ */
+// async function getFolder(folderId) {
+//   var folder = [];
+//   if (folderStructure && folderStructure[folderId]) {
+//     folder = folderStructure[folderId];
+//   } else {
+//     await getAllFolders();
+//     folder = folderStructure[folderId];
+//     if(pageToken == undefined && folder == undefined){
+//       return {
+//         'id'        : 'root' ,
+//         'mimeType'  : "application/vnd.google-apps.folder", 
+//         'name'      : "root",
+//         'parents'   : [ 'root']
          
-      };
-    }
-  }
-  console.log(folderStructure,count,folderId,pageToken);
-  return folder ? folder : getFolder(folderId,);
+//       };
+//     }
+//   }
+//   console.log(folderStructure,count,folderId,pageToken);
+//   return folder ? folder : getFolder(folderId,);
   
-}
+// }

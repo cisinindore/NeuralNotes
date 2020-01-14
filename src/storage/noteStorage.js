@@ -27,7 +27,7 @@ export default {
   move, 
   updateNoteName,
   getLinkToNote,
-  fetchNoteById
+  getFolderById
 };
 
 function fetchChildNotes(note) {
@@ -42,11 +42,17 @@ function fetchChildNotes(note) {
     });
 }
 
-function fetchNoteById(noteId) {
-  return noteStorageApi.fetchNoteById(noteId)
-    .then(function (data) {
-      return data;
-    });
+ function getFolderById(folderId) {
+  
+  return new Promise(function (resolve, reject) {
+      noteStorageApi.getFolderById(folderId)
+        .then((data) => {
+          return resolve(data);
+        })
+        .catch((error) => {
+          reject(error);
+        });
+    })
 }
 
 function fetchParentNote(noteId) {

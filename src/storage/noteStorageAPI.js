@@ -25,7 +25,7 @@ export default {
   move,
   updateFileName,
   updateNoteContentFileName,
-  fetchNoteById
+  getFolderById
 };
 
 function setAppRootFolder(folder) {
@@ -64,7 +64,6 @@ function scanDrive() {
  * Find child directories for given noteId folder.
  */
 function fetchChildNotes(note) {
-  console.log(note);
   spinner.show();
   return new Promise((resolve, reject) => {
     console.debug('[Get] Child notes for: "' + note.name + '"');
@@ -129,6 +128,19 @@ function fetchNoteById(noteId) {
     .finally(function () {
       spinner.hide();
     });
+}
+
+function getFolderById(folderId){
+  let request = googleDriveApi.client.files.get({
+    fileId: folderId,
+    fields: googleDriveApi.FILE_FIELDS
+  });
+
+  return new Promise(resolve => {
+    request.execute(function (resp) {
+      resolve(resp);
+    });
+  })
 }
 
 /**
@@ -208,11 +220,11 @@ function createAppRootTextFile({ id }) {
  */
 function findAppFolder() {
 
-    var folderName = localStorage.getItem('APP_FOLDER_NAME') != undefined ? localStorage.getItem('APP_FOLDER_NAME') : APP_FOLDER_NAME;
-    var folderId = localStorage.getItem('folderId') != undefined ? localStorage.getItem('folderId') : 'root';
+    var folderName = localStorage.getItem('parentFolderName') != undefined ? localStorage.getItem('parentFolderName') : APP_FOLDER_NAME;
+    var folderId   = localStorage.getItem('parentParentId') != undefined ? localStorage.getItem('parentParentId') : 'root';
 
-  localStorage.removeItem('APP_FOLDER_NAME');
-  localStorage.removeItem('folderId');
+  localStorage.removeItem('parentFolderName');
+  localStorage.removeItem('parentParentId');
 
   return googleDriveApi.findByName({
     name: folderName,

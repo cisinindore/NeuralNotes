@@ -87,7 +87,6 @@ function forEachNode(func) {
  */
 export function addChildrenToTree({ parentId, children }) {
   const parentNote = findNoteById(parentId);
-  console.log(parentId,'*****************parentId*******************',parentNote);
   let newChildren;
   newChildren = children.map((child) => {
     child.parent = parentNote;

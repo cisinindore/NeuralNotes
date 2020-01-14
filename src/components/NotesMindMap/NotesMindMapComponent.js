@@ -15,21 +15,17 @@ export class NotesMindMapComponent extends Component {
       propsRootNote:{},
     };
   }
-  componentWillReceiveProps(props){
-    this.setState({propsRootNote:props.rootNote});
-  }
-
-  editRootNode(){
-   const {propsRootNote} =this.state;
-  }
+  // componentWillReceiveProps(props){
+  //   this.setState({ propsRootNote:props.rootNote });
+  // } 
 
   render() {
     const {
       selectedNote,
       showNoteNameEditor,
-      isChangeParentModeActive
+      isChangeParentModeActive,
+      props
     } = this.props;
-    const {propsRootNote} =this.state;
     const visGraph = this.treeToVisGraph();
 
     const visOptions = {

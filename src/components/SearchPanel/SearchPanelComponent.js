@@ -28,13 +28,12 @@ export const SearchPanelComponent = props => {
     setIsModalVisible(true);
 
     
-    googleDriveApi.findNotesByName(query).then(data => {
-      const results = data.map((item, key) =>{
-        if(item.parent.id != 'root'){
-          return <li onClick={() => renderResult(item.parent)} key={item.id} > {item.parent.name} > {item.name}</li>;
-        }
+    googleDriveApi.findNotesByName(query).then(searchFolders => {
+
+      const searchResult = searchFolders.map((item, key) =>{
+        return <li onClick={() => renderResult(item.parents[0])} key={item.id} > { key+1 }. {item.name}</li>;
       });
-      setSearchResults(results);
+      setSearchResults(searchResult);
       spinner.hide();
     });
       
@@ -45,37 +44,26 @@ export const SearchPanelComponent = props => {
   }
 
 
-  const renderResult = (parent) => {
-    localStorage.setItem('APP_FOLDER_NAME',parent.name);
-    localStorage.setItem('folderId',parent.parents[0]); 
-    setIsModalVisible(false);
-    let parentFolder =  noteStorage.fetchNoteById(parent.parents[0]).then(data=>console.log("successssss", data));
-    console.log("returned test data --- ", parentFolder)
-    // googleDriveApi.findByName({
-    //   name: parent.name,
-    //   folderId: parent.parents[0]
-    // }).then((data)=> {
-    //   noteStorage.fetchChildNotes(data).then((withChildData)=>
-    //     props.setRoot(data)  
-    //   )        
-    // });
+  const renderResult = (parentId) => {
     
-    noteStorage.scanDrive().then(  
-    (data)=> {
-        console.log(data);
-        noteStorage.fetchChildNotes(data).then((withChildData)=>
-          props.setRoot(data)  
-        )        
-      }
-    );
-
-    
+    noteStorage.getFolderById(parentId).then(parent => {
+      localStorage.setItem('parentFolderName',parent.name);
+      localStorage.setItem('parentParentId',parent.parents[0]); 
+      setIsModalVisible(false);
+      noteStorage.scanDrive().then(  
+        (data)=> {
+            noteStorage.fetchChildNotes(data).then(()=>
+              props.setRoot(data)  
+            )
+          }
+        );
+      });
   }
   return (
     <StyledSearchPanelWrapper>
       <StyledIcon />
       <StyledInput value={query} onChange={onChange}/>
-      <input type="button" value="Open" onClick={() => openModal()} />
+      <input type="button" value="search" onClick={() => openModal()} />
       <Modal  visible={isModalVisible} effect="fadeInUp" onClickAways={() => closeModal()}>
         <div>
           <h1>Search Results
