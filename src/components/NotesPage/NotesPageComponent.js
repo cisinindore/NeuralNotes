@@ -15,7 +15,7 @@ export class NotesPageComponent extends Component {
   }
   // Set root node for re-render
   setRoot(rootData){
-    this.setState({ rootData:rootData })
+    this.setState({rootData:rootData})
       
   }
 

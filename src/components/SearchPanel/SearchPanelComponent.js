@@ -27,7 +27,6 @@ export const SearchPanelComponent = props => {
     spinner.show();
     setIsModalVisible(true);
 
-    
     googleDriveApi.findNotesByName(query).then(searchFolders => {
 
       const searchResult = searchFolders.map((item, key) =>{
@@ -44,8 +43,9 @@ export const SearchPanelComponent = props => {
   }
 
 
+
   const renderResult = (parentId) => {
-    
+
     noteStorage.getFolderById(parentId).then(parent => {
       localStorage.setItem('parentFolderName',parent.name);
       localStorage.setItem('parentParentId',parent.parents[0]); 
@@ -64,6 +64,7 @@ export const SearchPanelComponent = props => {
       <StyledIcon />
       <StyledInput value={query} onChange={onChange}/>
       <input type="button" value="search" onClick={() => openModal()} />
+
       <Modal  visible={isModalVisible} effect="fadeInUp" onClickAways={() => closeModal()}>
         <div>
           <h1>Search Results
